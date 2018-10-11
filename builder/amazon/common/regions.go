@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -18,23 +17,29 @@ func getValidationSession() *ec2.EC2 {
 	return ec2conn
 }
 
-func listEC2Regions(ec2conn ec2iface.EC2API) []string {
+func listEC2Regions(ec2conn ec2iface.EC2API) ([]string, error) {
 	var regions []string
 	resultRegions, err := ec2conn.DescribeRegions(nil)
 	if err != nil {
-		log.Printf("DescribeRegions: %v", err)
+		return nil, fmt.Errorf("listEC2Regions: %v", err)
 	}
 	for _, region := range resultRegions.Regions {
 		regions = append(regions, *region.RegionName)
 	}
 
-	return regions
+	return regions, nil
 }
 
-// ValidateRegion returns true if the supplied region is a valid AWS
-// region and false if it's not.
+// ValidateRegion returns an error if the region name is valid
+// and exists; otherwise nil.
+// ValidateRegion calls ec2conn.DescribeRegions to get the list of
+// regions available to this account, a DescribeRegions error
+// could be returned
 func ValidateRegion(region string, ec2conn ec2iface.EC2API) error {
-	regions := listEC2Regions(ec2conn)
+	regions, err := listEC2Regions(ec2conn)
+	if err != nil {
+		return err
+	}
 	for _, valid := range regions {
 		if region == valid {
 			return nil
