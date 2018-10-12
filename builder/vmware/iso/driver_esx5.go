@@ -89,6 +89,7 @@ func (d *ESX5Driver) Stop(vmxPathLocal string) error {
 
 func (d *ESX5Driver) Register(vmxPathLocal string) error {
 	vmxPath := filepath.ToSlash(filepath.Join(d.outputDir, filepath.Base(vmxPathLocal)))
+	vmxPath = fmt.Sprintf("\"%s\"", vmxPath)
 	if err := d.upload(vmxPath, vmxPathLocal); err != nil {
 		return err
 	}
